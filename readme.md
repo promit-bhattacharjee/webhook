@@ -59,6 +59,8 @@ project/
 │   └── Dockerfile
 │
 ├── workflow.json
+├──demo-video.4mp
+├──demo-video-link.txt
 ├── docker-compose.yml
 └── README.md
 ```
