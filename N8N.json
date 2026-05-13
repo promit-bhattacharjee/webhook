@@ -1,0 +1,519 @@
+{
+  "name": "Assignment Webhook Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "text-reciver-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "db44a0df-f99b-4132-ae08-d840839997e4",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -192,
+        208
+      ],
+      "webhookId": "b6865f06-3459-448f-8360-f399b7af8712"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.email }}",
+        "subject": "Your AI Text Analysis ",
+        "message": "=Hello,<br>\nHere is the analysis of your text<br>\n<br>\n<b>\nSummary:\n</b>\n<br><p>{{ $('AI Agent').item.json.output.summary }}</p>\n<br><br><b>Key Points:</b>\n<ol>\n<li>\n  {{ $('AI Agent').item.json.output.key_points[0] }}\n</li>\n<li>\n  {{ $('AI Agent').item.json.output.key_points[1] }}\n</li>\n<li>\n  {{ $('AI Agent').item.json.output.key_points[2] }}\n</li>\n</ol>\n<i>Time Stamp:\n{{ $('Date & Time').item.json.currentDate }}</i>",
+        "options": {}
+      },
+      "id": "447680fe-ae63-4f2b-83b2-dc41ea1e95fc",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1280,
+        240
+      ],
+      "webhookId": "ac97be1d-6700-460e-a208-19ec052d380b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "9OuzfcloeEZNPGDZ",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        656
+      ],
+      "id": "de3267a2-32e8-4b6a-8e37-d25c75827e52",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n\"status\":\"success\",\n\"code\":200,\n\"message\":\"Task Completed, Please Check Your Mail\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1440,
+        240
+      ],
+      "id": "23f8f6fd-5a6a-4237-ab31-92c6139eaed7",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a professional research assistant. Your task is to analyze the provided text and extract information in a structured format.\n\n1. Summary: Provide a concise summary of the text in 2-4 sentences.\n2. Key Points: Extract exactly 3 distinct, high-impact key points.\n\nOutput Format: You must return only a valid JSON object. Do not include any conversational text or markdown blocks (like ```json). The structure must strictly follow the connected Structured Output Parser:\n{\n  \"summary\": \"string\",\n  \"key_points\": [\"point 1\", \"point 2\", \"point 3\"]\n}\nUser Prompt:{{ $json.body.text }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        624,
+        240
+      ],
+      "id": "f5f63c97-495f-4272-b65b-bd9f608c3d54",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1YaYiNPIHG-UwhqppbVJqGzP6xguQS3tbkrgBZAn9kPw/edit?usp=sharing",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 479373524,
+          "mode": "list",
+          "cachedResultName": "Worksheet",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1YaYiNPIHG-UwhqppbVJqGzP6xguQS3tbkrgBZAn9kPw/edit#gid=479373524"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $json.currentDate }}",
+            "Email": "={{ $('Webhook').item.json.body.email }}",
+            "Session_ID": "={{ $('Webhook').item.json.body.session_id }}",
+            "Summary": "={{ $('AI Agent').item.json.output.summary }}",
+            "Key Point :1": "={{ $('AI Agent').item.json.output.key_points[0] }}",
+            "Key Point :2": "={{ $('AI Agent').item.json.output.key_points[1] }}",
+            "Key Point :3": "={{ $('AI Agent').item.json.output.key_points[2] }}",
+            " Original Text": "={{ $('Webhook').item.json.body.text }}"
+          },
+          "matchingColumns": [
+            "output"
+          ],
+          "schema": [
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Session_ID",
+              "displayName": "Session_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": " Original Text",
+              "displayName": " Original Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Key Point :1",
+              "displayName": "Key Point :1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Key Point :2",
+              "displayName": "Key Point :2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Key Point :3",
+              "displayName": "Key Point :3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "cellFormat": "USER_ENTERED",
+          "locationDefine": {
+            "values": {
+              "headerRow": "={{ 1 }}"
+            }
+          }
+        }
+      },
+      "id": "243773d9-de1d-432d-8b12-058bce89864a",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1120,
+        240
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oeSz2dhbgaJ9M5ti",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        928,
+        240
+      ],
+      "id": "62bd22ac-f911-4231-857e-07b10bc344b9",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserAutofixing",
+      "typeVersion": 1,
+      "position": [
+        704,
+        448
+      ],
+      "id": "85b5424c-dabf-43de-a0d6-a27c493053c9",
+      "name": "Auto-fixing Output Parser"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"summary\": {\n      \"type\": \"string\",\n      \"description\": \"A 2-4 sentence summary of the input text.\"\n    },\n    \"key_points\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"Exactly 3 key points extracted from the text.\"\n    }\n  },\n  \"required\": [\n    \"summary\",\n    \"key_points\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        656
+      ],
+      "id": "808a5cbc-0515-4554-a9b6-cac085da44cc",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.text }}",
+                    "rightValue": "/^(https?:\\/\\/)?(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&//=]*)/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "id": "ef622adf-1e19-45b4-917a-159ec2569f46"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Web URL"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        16,
+        224
+      ],
+      "id": "c6a889d7-54af-44ba-a96a-b10caf4aa2f2",
+      "name": "Switch",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.body.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        176,
+        160
+      ],
+      "id": "77268b4a-6230-4c40-bb4f-fac5cb6352f8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Analyze the following HTML content:\n\n{{ $json.data }}\n\nTask: \n1. Ignore all CSS, JavaScript, metadata, and @font-face or @keyframes style definitions.\n2. Identify the main human-readable content sections. \n3. If multiple distinct products or topics are mentioned, choose the most prominent one.\n4. Summarize that one specific content piece in exactly one clear, concise sentence.\n\nLogic Constraints:\n- Return ONLY the one-sentence summary.\n- No headers, no introductory text, and no markdown formatting.\n- CRITICAL: If no human-readable content is found, or the input is only code/empty, return 0.\n\nFinal Check: Output must be either a single sentence string or the integer 0."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        160
+      ],
+      "id": "a42ce340-da5c-443c-b659-b78acb63d407",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Auto-fixing Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto-fixing Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Auto-fixing Output Parser",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "0ecf3423-b9e1-4f78-86b2-8ae2c61ac470",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6d93097b02ff8f4c057ad5468aab041fd7fb64b00cebcbb97056116090abee3"
+  },
+  "id": "hg5lAStf854lQPx0",
+  "tags": []
+}
