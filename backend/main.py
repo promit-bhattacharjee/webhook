@@ -2,6 +2,11 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import requests
+import os
+from dotenv import load_dotenv as loadenv
+
+loadenv()
+N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
 
 app = FastAPI()
 
@@ -18,8 +23,8 @@ class AnalysisRequest(BaseModel):
     text: str
     session_id: str
 
-# PRODUCTION URL: Make sure the workflow is "Active" in n8n!
-N8N_WEBHOOK_URL = "https://promitbhattacharjee.app.n8n.cloud/webhook/text-reciver-webhook"
+loadenv()
+N8N_WEBHOOK_URL = os.getenv("N8N_WEBHOOK_URL")
 
 @app.post("/analyze")
 async def send_to_n8n(data: AnalysisRequest):
