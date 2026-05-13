@@ -1,0 +1,17 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Docker Compose will swap ${N8N_WEBHOOK_URL} with the value from your .env file
+      - N8N_WEBHOOK_URL=${N8N_WEBHOOK_URL}
+    restart: always
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
