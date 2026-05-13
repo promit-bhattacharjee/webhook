@@ -49,18 +49,17 @@ project/
 │
 ├── frontend/
 │   ├── index.html
-│   └── index.js
+│   ├── index.js
+│   └── Dockerfile
 │
 ├── backend/
 │   ├── main.py
 │   ├── requirements.txt
-│   └── .env
+│   ├── .env
+│   └── Dockerfile
 │
-├── workflow/
-│   └── n8n-workflow.json
-│
+├── workflow.json
 ├── docker-compose.yml
-├── nginx.conf
 └── README.md
 ```
 
@@ -70,7 +69,7 @@ project/
 
 - Python 3.8+
 - Docker & Docker Compose
-- n8n account (Cloud/Self-hosted)
+- n8n account
 - Google API credentials
 - Gemini/OpenAI API key
 
@@ -105,7 +104,7 @@ Run backend:
 python main.py
 ```
 
-Backend runs on:
+Backend URL:
 
 ```text
 http://0.0.0.0:8000
@@ -115,7 +114,7 @@ http://0.0.0.0:8000
 
 # 🌐 Frontend Setup
 
-Serve frontend using Docker + Nginx.
+Frontend is served directly using a Docker container.
 
 Frontend URL:
 
@@ -126,6 +125,18 @@ http://172.20.0.3:80
 ---
 
 # 🐳 Docker Setup
+
+## frontend/Dockerfile
+
+```dockerfile
+FROM nginx:alpine
+
+COPY . /usr/share/nginx/html
+
+EXPOSE 80
+```
+
+---
 
 ## backend/Dockerfile
 
@@ -164,13 +175,10 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: nginx:alpine
+    build: ./frontend
     container_name: ai-frontend
     ports:
       - "80:80"
-    volumes:
-      - ./frontend:/usr/share/nginx/html:ro
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - backend
     restart: unless-stopped
@@ -178,37 +186,18 @@ services:
 
 ---
 
-## nginx.conf
-
-```nginx
-events {}
-
-http {
-    server {
-        listen 80;
-
-        root /usr/share/nginx/html;
-        index index.html;
-
-        location / {
-            try_files $uri $uri/ /index.html;
-        }
-
-        location /api/ {
-            proxy_pass http://backend:8000/;
-        }
-    }
-}
-```
-
----
-
 # ▶️ Run with Docker
 
-Build and start services:
+Build containers:
 
 ```bash
-docker-compose up --build
+docker-compose build
+```
+
+Start containers:
+
+```bash
+docker-compose up
 ```
 
 Run in background:
@@ -223,10 +212,10 @@ Stop containers:
 docker-compose down
 ```
 
-Check running containers:
+View logs:
 
 ```bash
-docker ps
+docker-compose logs
 ```
 
 ---
@@ -239,7 +228,7 @@ docker ps
 http://172.20.0.3:80
 ```
 
-## Backend API
+## Backend
 
 ```text
 http://0.0.0.0:8000
@@ -280,17 +269,14 @@ Response:
 
 # 🔄 n8n Workflow
 
-Workflow steps:
-
-1. Webhook receives request
+1. Receive webhook request
 2. Detect text or URL
-3. Extract webpage content (if URL)
-4. AI generates:
-   - Summary
-   - Key points
-5. Store results in Google Sheets
-6. Send email to user
-7. Return success response
+3. Extract webpage content
+4. Generate AI summary
+5. Extract key points
+6. Store in Google Sheets
+7. Send email notification
+8. Return success response
 
 ---
 
@@ -307,8 +293,8 @@ Date | Email | Session_ID | Summary | Key Point 1 | Key Point 2 | Key Point 3 | 
 - Store secrets in `.env`
 - Never expose API keys
 - Use HTTPS in production
-- Enable rate limiting
 - Restrict CORS origins
+- Enable rate limiting
 
 ---
 
@@ -320,7 +306,7 @@ Date | Email | Session_ID | Summary | Key Point 1 | Key Point 2 | Key Point 3 | 
 pip install -r requirements.txt
 ```
 
-## Docker containers not running
+## Docker issue
 
 ```bash
 docker-compose logs
@@ -336,12 +322,12 @@ lsof -i :8000
 
 # ✨ Features
 
-- AI text summarization
-- URL scraping support
+- AI summarization
+- URL scraping
 - Google Sheets logging
 - Email notifications
 - Session management
-- Docker deployment support
+- Docker deployment
 
 ---
 
@@ -359,6 +345,6 @@ lsof -i :8000
 Users can submit text or URLs and automatically receive:
 
 - AI-generated summaries
-- Key points extraction
+- Key point extraction
 - Email notifications
-- Cloud-stored records in Google Sheets
+- Google Sheets storage
